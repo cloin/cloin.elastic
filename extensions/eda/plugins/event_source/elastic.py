@@ -39,6 +39,11 @@ options:
             - Seconds to wait before performing another query
         required: false
         default: 5
+    schema:
+        description:
+            - Connect to elasticsearch with http/https
+        required: false
+        default: http
 notes:
     - This is currently only capable of basic authentication and is used so far only for demo purposes
 '''
@@ -53,6 +58,7 @@ EXAMPLES = r'''
         elastic_username: elastic
         elastic_password: elastic!
         elastic_index_pattern: filebeat-*
+        elastic_schema: http
         query: |
         term:
             container.name.keyword: nginx
@@ -73,12 +79,13 @@ async def main(queue: asyncio.Queue, args: Dict[str, Any]):
     elastic_username = args.get("elastic_username", "elastic")
     elastic_password = args.get("elastic_password", "elastic!")
     elastic_index_pattern = args.get("elastic_index_pattern", "filebeat-*")
+    elastic_schema = args.get("elastic_schema", "http")
     interval = args.get("interval", 5)
     query = args.get("query", "term:\n  container.name.keyword: nginx")
 
     elastic_query = yaml.safe_load(query)
 
-    async with AsyncElasticsearch(f"http://{elastic_host}:{elastic_port}", basic_auth=(elastic_username, elastic_password)) as es:
+    async with AsyncElasticsearch(f"{elastic_schema}://{elastic_host}:{elastic_port}", basic_auth=(elastic_username, elastic_password)) as es:
         # Set the initial search_after value to the current timestamp
         search_after = datetime.utcnow()
 
